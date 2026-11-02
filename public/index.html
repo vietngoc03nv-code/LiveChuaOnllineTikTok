@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chùa Linh Ứng Online — TikTok Live RPC (Đức Phật A Di Đà 9:16)</title>
+  <title>TikTok Live RPC (Đức Phật A Di Đà 9:16)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,600;0,700;0,800;1,400&family=Noto+Serif:wght@700;900&display=swap" rel="stylesheet">
@@ -49,7 +49,7 @@
         <header class="minimal-top-bar">
           <div class="live-pill" id="liveStatusPill">
             <span class="live-dot" id="liveDot"></span>
-            <span id="liveStatusText">CHÙA LINH ỨNG • ĐỨC PHẬT A DI ĐÀ</span>
+            <span id="liveStatusText">ĐỨC PHẬT A DI ĐÀ</span>
           </div>
           <div class="top-Right-badges">
             <div class="mini-stat-pill">
@@ -57,6 +57,30 @@
             </div>
           </div>
         </header>
+
+        <!-- THANH MỤC TIÊU QUÀ TẶNG (GIFT GOAL BAR) -->
+        <div class="gift-goal-container" id="giftGoalContainer">
+          <div class="gift-goal-header">
+            <div class="gift-goal-title-wrap">
+              <span>🐉</span>
+              <span>MỤC TIÊU ĐẠI LỄ KIM LONG CHẦU PHẬT</span>
+            </div>
+            <div class="gift-goal-count" id="giftGoalCount">0 / 100 Xu (0%)</div>
+          </div>
+          <div class="gift-goal-bar-bg">
+            <div class="gift-goal-bar-fill" id="giftGoalFill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- BẢNG HƯỚNG DẪN TƯƠNG TÁC (PINNED CTA) -->
+        <div class="temple-guide-plaque" id="templeGuidePlaque">
+          <div class="plaque-header">🪷 HƯỚNG DẪN LỄ PHẬT</div>
+          <div class="plaque-item"><span class="plaque-icon">🪵</span> <span><strong>Thả tim:</strong> Gõ mõ tụng kinh</span></div>
+          <div class="plaque-item"><span class="plaque-icon">💬</span> <span><strong>Bình luận:</strong> AI đọc tên & Lời khấn</span></div>
+          <div class="plaque-item"><span class="plaque-icon">🎋</span> <span><strong>Gõ "xin xăm":</strong> Gieo quẻ may mắn</span></div>
+          <div class="plaque-item"><span class="plaque-icon">🔔</span> <span><strong>Chia sẻ:</strong> Thỉnh Đại Hồng Chung</span></div>
+          <div class="plaque-item"><span class="plaque-icon">🎁</span> <span><strong>Tặng quà:</strong> Dâng lễ & Rồng Vàng</span></div>
+        </div>
 
         <!-- 3. CỘT SÁNG TÂM HƯƠNG & LƯ HƯƠNG TRUNG TÂM -->
         <div class="sacred-light-beam" id="sacredLightBeam"></div>
@@ -222,7 +246,7 @@
       <div class="dock-section">
         <div class="dock-section-title">📡 Kết Nối Phòng TikTok Live</div>
         <div class="dock-input-row">
-          <input type="text" id="inputTikTokUser" class="dock-input" value="@zenfacts_vn" placeholder="Nhập @username hoặc link TikTok Live..." />
+          <input type="text" id="inputTikTokUser" class="dock-input" value="@ngoc03nv" placeholder="Nhập @username hoặc link TikTok Live..." />
           <button class="dock-btn gold" id="btnConnectTikTok">Kết Nối</button>
         </div>
         <button class="dock-btn" id="btnToggleAutoSim">
@@ -236,6 +260,7 @@
         <input type="text" id="inputDevoteeWish" class="dock-input" value="Cầu cho gia đình bình an, tài lộc hanh thông, vạn sự như ý" placeholder="Lời cầu nguyện..." />
 
         <div class="dock-grid-2">
+          <button class="dock-btn gold" id="btnRpcComment">💬 Đọc Bình Luận Thử</button>
           <button class="dock-btn gold" id="btnRpcIncense">🔥 Thắp 3 Nén Hương</button>
           <button class="dock-btn" id="btnRpcLantern">🏮 Thả Đèn Hoa Đăng</button>
           <button class="dock-btn" id="btnRpcWoodenFish">🪵 Gõ Mõ (+5)</button>

@@ -5,7 +5,7 @@ const fs = require('fs');
 const { spawn } = require('child_process');
 const cors = require('cors');
 const { WebSocketServer } = require('ws');
-const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require('tiktok-live-connector');
+const { TikTokLiveConnection, WebcastEvent, ControlEvent, SignConfig } = require('tiktok-live-connector');
 
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -15,7 +15,7 @@ const STATE_FILE = path.join(DATA_DIR, 'merit-state.json');
 fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
 
 // ============================================================================
-// 1. BỘ 18 QUẺ LINH XĂM CHÙA LINH ỨNG (FORTUNE STICKS DECK)
+// 1. BỘ 18 QUẺ LINH XĂM (FORTUNE STICKS DECK)
 // ============================================================================
 const FORTUNE_DECK = [
   {
@@ -108,8 +108,8 @@ class ZeroTTSManager {
     this.proc = null;
     this.ready = false;
     this.status = 'starting';
-    this.voice = 'maichi';
-    this.voices = ['maichi'];
+    this.voice = 'google';
+    this.voices = ['google'];
     this.model = 'zeroweight-ai/ZeroTTS';
     this.pending = new Map();
     this.inflight = new Map();
@@ -119,20 +119,29 @@ class ZeroTTSManager {
   }
 
   resolvePythonBin() {
-    const venvPy = path.join(__dirname, '.venv', 'bin', 'python');
-    if (fs.existsSync(venvPy)) return venvPy;
-    return 'python3';
+    const isWin = process.platform === 'win32';
+    const venvWin = path.join(__dirname, '.venv', 'Scripts', 'python.exe');
+    if (fs.existsSync(venvWin)) return venvWin;
+    const venvPosix = path.join(__dirname, '.venv', 'bin', 'python');
+    if (fs.existsSync(venvPosix)) return venvPosix;
+    return isWin ? 'python' : 'python3';
   }
 
   startWorker() {
     const pyBin = this.resolvePythonBin();
     const scriptPath = path.join(__dirname, 'tts_worker.py');
-    console.log(`[ZeroTTS] Khởi chạy worker với ${pyBin} (Giọng mặc định: Mai Chi)...`);
+    console.log(`[ZeroTTS] Khởi chạy worker với ${pyBin} (Giọng mặc định: Chị Google)...`);
 
     this.status = 'loading';
-    this.proc = spawn(pyBin, [scriptPath], {
+    const pyArgs = process.platform === 'win32' ? ['-X', 'utf8', scriptPath] : [scriptPath];
+    this.proc = spawn(pyBin, pyArgs, {
       cwd: __dirname,
-      stdio: ['pipe', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: 'utf-8',
+        PYTHONUTF8: '1'
+      }
     });
 
     this.proc.stdout.on('data', (chunk) => {
@@ -172,7 +181,7 @@ class ZeroTTSManager {
       } else if (msg.type === 'ready') {
         this.ready = true;
         this.status = 'ready';
-        this.voice = msg.voice || 'maichi';
+        this.voice = msg.voice || 'google';
         this.voices = msg.voices || ['maichi'];
         this.model = msg.model || this.model;
         console.log(`[ZeroTTS] Sẵn sàng sau ${msg.loadSec}s! Giọng: ${this.voice} (${this.voices.join(', ')})`);
@@ -199,7 +208,7 @@ class ZeroTTSManager {
       ready: this.ready,
       status: this.status,
       engine: 'ZeroTTS (zeroweight-ai/ZeroTTS)',
-      voice: state.settings.ttsVoice || this.voice || 'maichi',
+      voice: state.settings.ttsVoice || this.voice || 'google',
       voices: this.voices,
       model: this.model
     };
@@ -208,7 +217,7 @@ class ZeroTTSManager {
   synthesize(text, voiceOverride) {
     const cleanText = String(text || '').trim();
     if (!cleanText) return Promise.resolve({ ok: false, error: 'Empty text' });
-    const voice = (voiceOverride || state.settings.ttsVoice || 'maichi').toLowerCase();
+    const voice = (voiceOverride || state.settings.ttsVoice || 'google').toLowerCase();
     const dedupKey = `${voice}::${cleanText}`;
 
     if (this.inflight.has(dedupKey)) {
@@ -227,7 +236,7 @@ class ZeroTTSManager {
 
       this.pending.set(id, { resolve, timer });
       const payload = JSON.stringify({ id, text: cleanText, voice }) + '\n';
-      this.proc.stdin.write(payload);
+      this.proc.stdin.write(payload, 'utf8');
     }).finally(() => {
       this.inflight.delete(dedupKey);
     });
@@ -259,17 +268,21 @@ const DEFAULT_STATE = {
   recentEvents: [],
   settings: {
     ttsEnabled: true,
-    ttsVoice: 'maichi',
+    ttsVoice: 'google',
     bgMusicEnabled: true,
     sfxEnabled: true,
     smokeDensity: 1.0,
     autoSim: false,
     autoSimIntervalMs: 9500
   },
+  giftGoal: {
+    target: 100,
+    current: 0
+  },
   tiktok: {
     connected: false,
     connecting: false,
-    username: 'zenfacts_vn',
+    username: 'ngoc03nv',
     roomId: null,
     viewerCount: 0,
     lastError: null
@@ -286,7 +299,11 @@ function loadState() {
         devotees: saved.devotees || {},
         offerings: { ...DEFAULT_STATE.offerings, ...(saved.offerings || {}) },
         settings: { ...DEFAULT_STATE.settings, ...(saved.settings || {}) },
-        tiktok: { ...DEFAULT_STATE.tiktok }
+        giftGoal: {
+    target: 100,
+    current: 0
+  },
+  tiktok: { ...DEFAULT_STATE.tiktok }
       };
     }
   } catch (e) {
@@ -296,6 +313,12 @@ function loadState() {
 }
 
 let state = loadState();
+const initialApiKey = (state.settings?.signApiKey || process.env.SIGN_API_KEY || '').trim();
+if (initialApiKey) {
+  SignConfig.apiKey = initialApiKey;
+  state.settings.signApiKey = initialApiKey;
+  console.log(`[EulerStream] Đã nạp API Key xác thực: ${initialApiKey.slice(0, 12)}...`);
+}
 
 let saveTimer = null;
 function saveState() {
@@ -311,7 +334,8 @@ function saveState() {
       activeIncenseSticks: state.activeIncenseSticks,
       offerings: state.offerings,
       devotees: state.devotees,
-      settings: state.settings
+      settings: state.settings,
+      giftGoal: state.giftGoal || { target: 100, current: 0 }
     };
     fs.promises.writeFile(STATE_FILE, JSON.stringify(toSave, null, 2), 'utf8').catch((e) => {
       console.error('[State] Lỗi lưu file:', e.message);
@@ -339,7 +363,7 @@ const BRACKET_EMOTE_RE = /\[[^\]]{1,24}\]/g;
 const ALLOWED_VI_TEXT_RE = /[^0-9a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠ-ỹ\s.,!?]/g;
 const ALLOWED_VI_NAME_RE = /[^0-9a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠ-ỹ\s._-]/g;
 const VI_LETTER_RE = /[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠ-ỹ]/g;
-const BAD_WORDS_RE = /(đá dái|địt|lồn|cặc|đm|vcl|vl|yamate|i cư|lừa đảo|lừa à|te-le gram|telegram|bố là trùm)/i;
+const BAD_WORDS_RE = /(đụ|địt|lồn|cặc|đm|vcl|vl|yamate|i cu|lừa đảo|lừa|te-le gram|telegram|bộ lô trộm|đánh bạc|cờ bạc|tài xỉu|nổ hũ|kubet|thabet|chửi|chết|tự tử|ma túy|bú cu|kẹo ke|gái gọi|lô đề|bịp)/i;
 
 function isBlockedSpamOrToxic(raw) {
   if (!raw) return true;
@@ -478,7 +502,7 @@ const Rituals = {
       merit,
       wish,
       ttsText,
-      ttsVoice: state.settings.ttsVoice || 'maichi'
+      ttsVoice: state.settings.ttsVoice || 'google'
     });
 
     saveState();
@@ -535,7 +559,7 @@ const Rituals = {
       merit,
       wish,
       ttsText,
-      ttsVoice: state.settings.ttsVoice || 'maichi'
+      ttsVoice: state.settings.ttsVoice || 'google'
     });
 
     saveState();
@@ -565,7 +589,7 @@ const Rituals = {
       wish,
       merit,
       ttsText,
-      ttsVoice: state.settings.ttsVoice || 'maichi'
+      ttsVoice: state.settings.ttsVoice || 'google'
     });
 
     saveState();
@@ -599,6 +623,20 @@ const Rituals = {
     const wish = params.wish || `Dâng cúng ${giftName} lên Tam Bảo`;
     const devotee = recordDevotee(user, uniqueId, avatar, merit, 3, 1, wish);
 
+    // Tiến trình Thanh Mục Tiêu Quà Tặng (Gift Goal Bar)
+    if (!state.giftGoal) state.giftGoal = { target: 100, current: 0 };
+    state.giftGoal.current = (state.giftGoal.current || 0) + coins;
+    if (state.giftGoal.current >= state.giftGoal.target) {
+      state.giftGoal.current = 0;
+      setTimeout(() => {
+        Rituals.grandCeremony({
+          user: devotee.name,
+          coins: 100,
+          giftName: 'Đạt Mốc Mục Tiêu Quà Tặng'
+        });
+      }, 1800);
+    }
+
     const ttsText = params.readTts === false
       ? ''
       : `Công đức vô lượng! Cảm tạ thí chủ ${devotee.name} đã phát tâm dâng cúng ${giftName}, tích thêm ${merit} điểm công đức. Nguyện cầu chư Phật gia hộ cho thí chủ vạn sự cát tường như ý.`;
@@ -614,7 +652,7 @@ const Rituals = {
       merit,
       wish,
       ttsText,
-      ttsVoice: state.settings.ttsVoice || 'maichi'
+      ttsVoice: state.settings.ttsVoice || 'google'
     });
 
     saveState();
@@ -646,7 +684,7 @@ const Rituals = {
       fortune,
       merit,
       ttsText,
-      ttsVoice: state.settings.ttsVoice || 'maichi'
+      ttsVoice: state.settings.ttsVoice || 'google'
     });
 
     saveState();
@@ -674,6 +712,35 @@ const Rituals = {
     saveState();
     broadcastNotification('temple.state', getPublicState());
     return getPublicState();
+  },
+
+  viewerComment(params = {}) {
+    const user = sanitizeUserName(params.user);
+    const uniqueId = params.uniqueId || '';
+    const avatar = params.avatar || '';
+    const comment = sanitizeWishText(params.comment || params.wish) || 'A Di Đà Phật';
+    const merit = 5;
+
+    const devotee = recordDevotee(user, uniqueId, avatar, merit, 0, 0, comment);
+
+    const ttsText = params.readTts === false
+      ? ''
+      : `Thí chủ ${devotee.name}: ${comment}.`;
+
+    const event = pushEventLog({
+      type: 'viewerComment',
+      user: devotee.name,
+      uniqueId: devotee.uniqueId,
+      avatar: devotee.avatar,
+      merit,
+      wish: comment,
+      ttsText,
+      ttsVoice: state.settings.ttsVoice || 'google'
+    });
+
+    saveState();
+    broadcastNotification('temple.event', { event, state: getPublicState() });
+    return { event, state: getPublicState() };
   },
 
   resetMerit() {
@@ -707,7 +774,7 @@ function parseViewerComment(commentText, user, uniqueId, avatar) {
   }
 
   const cleanWish = sanitizeWishText(raw);
-  if (!cleanWish || cleanWish.length < 3) {
+  if (!cleanWish || cleanWish.length < 1) {
     return null;
   }
 
@@ -786,7 +853,8 @@ function parseViewerComment(commentText, user, uniqueId, avatar) {
     return Rituals.sendPrayer({ user: cleanUser, uniqueId, avatar, wish: cleanWish });
   }
 
-  return Rituals.burnIncense({ user: cleanUser, uniqueId, avatar, count: 1, wish: cleanWish });
+  // Bất kỳ bình luận nào khác: Đọc tên người đó + nội dung bình luận, hiển thị trên Chánh Điện
+  return Rituals.viewerComment({ user: cleanUser, uniqueId, avatar, comment: cleanWish });
 }
 
 const giftComboTracker = new Map();
@@ -838,6 +906,7 @@ async function connectTikTokLive(usernameOrUrl) {
 
   if (tiktokConn) {
     try {
+      tiktokConn.removeAllListeners();
       await tiktokConn.disconnect();
     } catch (_) {}
     tiktokConn = null;
@@ -853,10 +922,15 @@ async function connectTikTokLive(usernameOrUrl) {
   };
   broadcastNotification('temple.state', getPublicState());
 
+  const apiKey = (state.settings?.signApiKey || process.env.SIGN_API_KEY || '').trim();
+  if (apiKey) {
+    SignConfig.apiKey = apiKey;
+  }
   tiktokConn = new TikTokLiveConnection(cleanUser, {
-    processInitialData: true,
+    processInitialData: false,
     fetchRoomInfoOnConnect: false,
-    enableExtendedGiftInfo: false
+    enableExtendedGiftInfo: false,
+    signApiKey: apiKey || undefined
   });
 
   tiktokConn.on(ControlEvent.CONNECTED, (roomState) => {
@@ -895,7 +969,19 @@ async function connectTikTokLive(usernameOrUrl) {
     broadcastNotification('temple.state', getPublicState());
   });
 
+  const processedChatMsgIds = new Set();
   tiktokConn.on(WebcastEvent.CHAT, (data) => {
+    const msgId = String(data?.msgId || data?.id || `${data?.user?.uniqueId || ''}_${data?.content || data?.comment || ''}_${data?.createTime || ''}`);
+    if (msgId && processedChatMsgIds.has(msgId)) {
+      return; // Bỏ qua tin nhắn lặp từ TikTok
+    }
+    if (msgId) {
+      processedChatMsgIds.add(msgId);
+      if (processedChatMsgIds.size > 800) {
+        const first = processedChatMsgIds.values().next().value;
+        processedChatMsgIds.delete(first);
+      }
+    }
     const { user, uniqueId, avatar } = extractUserFromEvent(data);
     const commentText = data?.content || data?.comment || '';
     console.log(`[TikTok Chat] ${user}: ${commentText}`);
@@ -1043,6 +1129,7 @@ async function handleRpcCall(method, params = {}) {
   switch (method) {
     case 'temple.getState':
       return getPublicState();
+    // case 'temple.comment' gộp xử lý thống nhất qua parseViewerComment bên dưới
     case 'temple.burnIncense':
       return Rituals.burnIncense(params);
     case 'temple.strikeWoodenFish':
@@ -1061,10 +1148,22 @@ async function handleRpcCall(method, params = {}) {
       return Rituals.updateSettings(params);
     case 'temple.resetMerit':
       return Rituals.resetMerit();
+    case 'temple.setSignApiKey': {
+      state.settings.signApiKey = String(params.apiKey || '').trim();
+      if (state.settings.signApiKey) {
+        SignConfig.apiKey = state.settings.signApiKey;
+      }
+      saveState();
+      broadcastNotification('temple.state', getPublicState());
+      const user = state.tiktok?.username || 'ngoc03nv';
+      return connectTikTokLive(user).catch(err => {
+        return { error: err.message, ...getPublicState() };
+      });
+    }
     case 'temple.comment':
       return parseViewerComment(params.comment, params.user, params.uniqueId, params.avatar);
     case 'temple.speak': {
-      const res = await zeroTts.synthesize(params.text, params.voice || 'maichi');
+      const res = await zeroTts.synthesize(params.text, params.voice || 'google');
       if (res.ok && params.broadcast !== false) {
         broadcastNotification('tts.play', {
           text: params.text,
@@ -1132,7 +1231,7 @@ app.post('/rpc', async (req, res) => {
 // ZeroTTS HTTP Endpoint (Mai Chi default)
 app.all('/api/tts', async (req, res) => {
   const text = (req.body?.text || req.query?.text || '').trim();
-  const voice = (req.body?.voice || req.query?.voice || state.settings.ttsVoice || 'maichi').trim();
+  const voice = (req.body?.voice || req.query?.voice || state.settings.ttsVoice || 'google').trim();
   if (!text) {
     return res.status(400).json({ ok: false, error: 'Thiếu nội dung text cần đọc' });
   }
@@ -1212,11 +1311,21 @@ server.listen(PORT, () => {
   console.log(`🔌 JSON-RPC 2.0 Endpoint   : http://localhost:${PORT}/rpc (ws://localhost:${PORT}/ws)`);
   console.log(`============================================================`);
 
-  // Tự động kết nối tới @zenfacts_vn ngay khi khởi động server
-  const defaultChannel = process.env.TIKTOK_USER || state.tiktok?.username || 'zenfacts_vn';
+  // Tự động kết nối tới @ngoc03nv ngay khi khởi động server
+  const defaultChannel = process.env.TIKTOK_USER || state.tiktok?.username || 'ngoc03nv';
   if (defaultChannel) {
     connectTikTokLive(defaultChannel).catch((err) => {
       console.warn(`[Auto-Connect @${defaultChannel}] Chưa kết nối được ngay:`, err.message);
     });
   }
+
+  // Tự động thử kết nối lại mỗi 25s khi phòng Live @ngoc03nv bắt đầu phát sóng
+  setInterval(() => {
+    if (!state.tiktok?.connected && !state.tiktok?.connecting) {
+      const channel = process.env.TIKTOK_USER || state.tiktok?.username || 'ngoc03nv';
+      if (channel) {
+        connectTikTokLive(channel).catch(() => {});
+      }
+    }
+  }, 90000);
 });

@@ -3,51 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bảng Điều Khiển JSON-RPC 2.0 — Chùa Linh Ứng TikTok Live</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=Noto+Serif:wght@700;900&display=swap" rel="stylesheet">
+  <title>RPC Admin — TikTok Live</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Noto+Serif+TC:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #120504;
-      --card: #210906;
-      --border: rgba(244, 193, 80, 0.38);
+      --bg: #0c0202;
+      --card: #190505;
       --gold: #f4c150;
-      --gold-light: #ffe694;
-      --text: #fff8eb;
-      --muted: #d6ba8a;
+      --gold-bright: #ffe685;
+      --crimson: #8a1414;
+      --text: #fbedd0;
+      --muted: #a38968;
+      --border: rgba(244, 193, 80, 0.35);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
-      background: radial-gradient(circle at 50% 0%, #330c08 0%, #100302 80%);
+      background: radial-gradient(ellipse at 50% 20%, #200808 0%, #0c0202 75%);
       color: var(--text);
-      font-family: 'Be Vietnam Pro', sans-serif;
+      font-family: 'Noto Serif TC', serif;
       min-height: 100vh;
-      padding: 28px;
+      padding: 24px;
     }
     .container {
-      max-width: 1280px;
+      max-width: 1200px;
       margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 22px;
     }
     .top-bar {
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 18px;
-      padding: 18px 24px;
+      align-items: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
     }
     .top-title {
-      font-family: 'Noto Serif', serif;
-      font-size: 26px;
-      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      color: var(--gold-bright);
+      letter-spacing: 1px;
     }
     .top-sub {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--muted);
       margin-top: 4px;
     }
@@ -56,48 +60,58 @@
       gap: 12px;
     }
     .btn {
-      cursor: pointer;
+      background: rgba(244, 193, 80, 0.15);
       border: 1px solid var(--border);
-      background: linear-gradient(180deg, #6b140e 0%, #3d0906 100%);
-      color: var(--gold-light);
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-weight: 700;
-      font-size: 14px;
+      color: var(--gold-bright);
+      padding: 9px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
       text-decoration: none;
+      transition: all 0.2s ease;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
+    }
+    .btn:hover {
+      background: rgba(244, 193, 80, 0.3);
+      border-color: var(--gold-bright);
+      transform: translateY(-1px);
     }
     .btn.gold {
-      background: linear-gradient(180deg, #f4c150 0%, #c48312 100%);
-      color: #1f0604;
-      border-color: #fff3b0;
+      background: linear-gradient(135deg, #d49a24 0%, #f4c150 100%);
+      color: #120202;
+      border-color: #ffe685;
+    }
+    .btn.gold:hover {
+      background: linear-gradient(135deg, #e5aa35 0%, #ffe685 100%);
     }
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
       gap: 20px;
     }
     .card {
       background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
     .card h2 {
-      font-size: 18px;
-      color: var(--gold-light);
+      font-size: 16px;
+      color: var(--gold-bright);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
       border-bottom: 1px solid rgba(244, 193, 80, 0.2);
-      padding-bottom: 10px;
     }
     .row {
       display: flex;
       gap: 10px;
+      margin-bottom: 12px;
     }
     input, select, textarea {
       width: 100%;
@@ -124,13 +138,31 @@
       overflow-x: auto;
       max-height: 280px;
     }
+    .status-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .status-tag.ok {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+      border: 1px solid #2ecc71;
+    }
+    .status-tag.warn {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header class="top-bar">
       <div>
-        <div class="top-title">🪷 BẢNG ĐIỀU KHIỂN CHÙA ONLINE TIKTOK LIVE RPC (BUN.JS + ZEROTTS MAI CHI)</div>
+        <div class="top-title">🪷 BẢNG ĐIỀU KHIỂN TIKTOK LIVE RPC</div>
         <div class="top-sub" id="statusBanner">Đang tải trạng thái hệ thống...</div>
       </div>
       <div class="top-links">
@@ -140,30 +172,53 @@
     </header>
 
     <div class="grid">
+      <!-- THẺ KẾT NỐI TIKTOK -->
       <section class="card">
-        <h2>📡 1. Kết Nối Phòng TikTok Live & Giọng Đọc ZeroTTS (Mai Chi)</h2>
+        <h2>📡 1. Kết Nối Phòng TikTok Live (@ngoc03nv)</h2>
+        <div id="ttStatusTag" class="status-tag warn">Chưa kết nối</div>
         <div class="row">
-          <input type="text" id="ttUser" placeholder="Nhập @username TikTok đang phát Live..." />
+          <input type="text" id="ttUser" value="@ngoc03nv" placeholder="Nhập @username TikTok đang phát Live..." />
           <button class="btn gold" id="btnConn">Kết Nối Live</button>
           <button class="btn" id="btnDisc">Ngắt</button>
         </div>
-        <div class="row">
-          <input type="text" id="ttsDirectText" value="Nam mô A Di Đà Phật. Chùa Linh Ứng Online xin kính chào quý thí chủ thập phương." />
-          <button class="btn gold" id="btnSpeakMaiChi">🎙️ Đọc thử Giọng Mai Chi</button>
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(244, 193, 80, 0.25);">
+          <div style="font-size: 13px; color: var(--gold-bright); margin-bottom: 6px;">
+            🔑 <strong>EulerStream API Key (Miễn Phí 100% để chống giới hạn IP):</strong>
+          </div>
+          <div class="row">
+            <input type="text" id="inputSignApiKey" placeholder="Dán mã EulerStream API Key vào đây..." />
+            <button class="btn gold" id="btnSaveSignApiKey">Lưu Key</button>
+          </div>
+          <div style="font-size: 12px; color: var(--muted); line-height: 1.4;">
+            👉 <a href="https://www.eulerstream.com" target="_blank" style="color: #ffe685; text-decoration: underline;">Nhấn vào đây đăng nhập Google lấy Key miễn phí trên EulerStream.com</a> (giúp kết nối thông suốt vĩnh viễn, không bao giờ bị nghẽn).
+          </div>
         </div>
-        <audio id="adminAudioPreview" controls style="width: 100%; height: 38px;"></audio>
       </section>
 
+      <!-- THẺ THỬ GIỌNG ĐỌC -->
       <section class="card">
-        <h2>🙏 2. Gửi Lệnh Tương Tác JSON-RPC 2.0</h2>
+        <h2>🎙️ 2. Thử Nghiệm Giọng Đọc AI (Chị Google Tiếng Việt)</h2>
         <div class="row">
-          <input type="text" id="rpcUser" value="Đại Thí Chủ Minh Tâm" placeholder="Tên người xem..." />
-          <input type="text" id="rpcWish" value="Cầu gia đạo bình an, tài lộc vượng phát" placeholder="Lời cầu nguyện..." />
+          <input type="text" id="ttsDirectText" value="Nam mô A Di Đà Phật. Xin kính chào quý thí chủ thập phương." />
+          <button class="btn gold" id="btnSpeakMaiChi">🎙️ Đọc Thử</button>
+        </div>
+        <audio id="adminAudioPreview" controls style="width: 100%; height: 38px;"></audio>
+        <p style="font-size: 12.5px; color: var(--muted); margin-top: 8px;">
+          Tất cả bình luận của người xem sẽ được Chị Google tự động phát âm chuẩn xác tiếng Việt và hiển thị bong bóng lời thoại vàng trên Chánh Điện.
+        </p>
+      </section>
+
+      <!-- THẺ GỬI LỆNH TƯƠNG TÁC -->
+      <section class="card">
+        <h2>🙏 3. Thử Nghiệm Nghi Thức Chánh Điện</h2>
+        <div class="row">
+          <input type="text" id="rpcUser" value="Thí Chủ Thử Nghiệm" placeholder="Tên người xem..." />
+          <input type="text" id="rpcWish" value="Cầu gia đạo bình an, vạn sự như ý" placeholder="Lời cầu nguyện..." />
         </div>
         <div class="action-grid">
           <button class="btn gold" onclick="sendRpc('temple.burnIncense', { count: 3 })">🔥 Thắp 3 Nén Hương</button>
           <button class="btn" onclick="sendRpc('temple.sendPrayer', {})">🏮 Thả Đèn Hoa Đăng</button>
-          <button class="btn" onclick="sendRpc('temple.strikeWoodenFish', { count: 9 })">🪵 Gõ Mõ 9 Nhịp</button>
+          <button class="btn gold" onclick="sendRpc('temple.strikeWoodenFish', { count: 9 })">🪵 Gõ Mõ 9 Nhịp</button>
           <button class="btn" onclick="sendRpc('temple.ringBell', { count: 1, readTts: true })">🔔 Thỉnh Đại Hồng Chung</button>
           <button class="btn" onclick="sendRpc('temple.drawFortune', {})">🎋 Xin Xăm / Gieo Quẻ</button>
           <button class="btn" onclick="sendRpc('temple.offerGift', { giftType: 'fruit', coins: 30, giftName: 'Mâm Ngũ Quả Cát Tường' })">🍑 Dâng Mâm Ngũ Quả</button>
@@ -172,20 +227,14 @@
         </div>
       </section>
 
+      <!-- THẺ GIẢ LẬP BÌNH LUẬN -->
       <section class="card">
-        <h2>💬 3. Giả Lập Bình Luận Người Xem TikTok</h2>
+        <h2>💬 4. Giả Lập Bình Luận TikTok Live</h2>
         <div class="row">
-          <input type="text" id="simComment" value="Con xin gieo quẻ cầu tài lộc đầu tháng ạ" placeholder="Nhập nội dung bình luận TikTok..." />
-          <button class="btn gold" id="btnSendComment">Gửi Comment</button>
+          <input type="text" id="simComment" value="Chúc kênh livestream ngày mới nhiều may mắn và an lạc" placeholder="Nhập nội dung bình luận..." />
+          <button class="btn gold" id="btnSendComment">Gửi Bình Luận</button>
         </div>
-        <p style="font-size: 13px; color: var(--muted);">
-          Từ khóa tự động nhận diện: <code>thắp hương</code>, <code>bái phật</code>, <code>cầu ...</code>, <code>xin xăm / gieo quẻ</code>, <code>thỉnh chuông</code>, <code>gõ mõ</code>.
-        </p>
-      </section>
-
-      <section class="card">
-        <h2>🔌 4. Nhật Ký Phản Hồi JSON-RPC 2.0 (`/rpc`)</h2>
-        <pre id="rpcOutput">{ "status": "Sẵn sàng nhận lệnh JSON-RPC 2.0" }</pre>
+        <pre id="rpcOutput">{ "status": "Sẵn sàng nhận lệnh" }</pre>
       </section>
     </div>
   </div>
@@ -222,19 +271,43 @@
     };
     document.getElementById('btnSpeakMaiChi').onclick = async () => {
       const text = document.getElementById('ttsDirectText').value.trim();
-      const data = await sendRpc('temple.speak', { text, voice: 'maichi', broadcast: true });
+      const data = await sendRpc('temple.speak', { text, voice: 'google', broadcast: true });
       if (data?.result?.url) {
         const player = document.getElementById('adminAudioPreview');
         player.src = data.result.url;
         player.play().catch(() => {});
       }
     };
+    document.getElementById('btnSaveSignApiKey').onclick = async () => {
+      const apiKey = document.getElementById('inputSignApiKey').value.trim();
+      const data = await sendRpc('temple.setSignApiKey', { apiKey });
+      alert('Đã lưu mã EulerStream API Key!');
+    };
 
     async function refreshStatus() {
-      const res = await fetch('/api/state');
-      const st = await res.json();
-      document.getElementById('statusBanner').textContent =
-        `Hương đã thắp: ${st.totalIncense} | Tổng Công Đức: ${st.totalMerit} | ZeroTTS: ${st.tts?.status} (Giọng: ${st.tts?.voice})`;
+      try {
+        const res = await fetch('/api/state');
+        const st = await res.json();
+        document.getElementById('statusBanner').textContent =
+          `Hương đã thắp: ${st.totalIncense} | Tổng Công Đức: ${st.totalMerit} | TTS Engine: ${st.tts?.model || 'Google TTS'} (Tiếng Việt)`;
+        
+        const tag = document.getElementById('ttStatusTag');
+        if (st.tiktok?.connected) {
+          tag.className = 'status-tag ok';
+          tag.textContent = `🟢 Đang kết nối Live: @${st.tiktok.username} (Phòng: ${st.tiktok.roomId || 'OK'})`;
+        } else if (st.tiktok?.connecting) {
+          tag.className = 'status-tag';
+          tag.textContent = `🟡 Đang kết nối @${st.tiktok.username}...`;
+        } else {
+          tag.className = 'status-tag warn';
+          const errText = st.tiktok?.lastError ? ` (${st.tiktok.lastError.slice(0, 70)}...)` : '';
+          tag.textContent = `🔴 Chưa kết nối TikTok Live${errText}`;
+        }
+
+        if (st.settings?.signApiKey && !document.getElementById('inputSignApiKey').value) {
+          document.getElementById('inputSignApiKey').value = st.settings.signApiKey;
+        }
+      } catch (_) {}
     }
     refreshStatus();
     setInterval(refreshStatus, 4000);

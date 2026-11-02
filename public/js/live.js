@@ -306,7 +306,12 @@
 
     if (nameEl) nameEl.textContent = user || 'Thí Chủ Hữu Duyên';
     if (actEl) actEl.textContent = actionLabel || '✨ Dâng hương cầu an';
-    if (wishEl) wishEl.textContent = `“${wish || 'Nam Mô A Di Đà Phật, cầu bình an cát tường'}”`;
+    if (wishEl) {
+      wishEl.textContent = `“${wish || 'Nam Mô A Di Đà Phật, cầu bình an cát tường'}”`;
+      wishEl.classList.remove('pop-anim');
+      void wishEl.offsetWidth;
+      wishEl.classList.add('pop-anim');
+    }
 
     if (avatarEl) {
       if (avatar) {
@@ -357,6 +362,16 @@
     document.getElementById('statWoodenFish').textContent = Number(st.woodenFishHits || 0).toLocaleString('vi-VN');
 
     renderIncenseSticks(st.activeIncenseSticks || 9);
+    // Cập nhật Thanh Mục Tiêu Quà Tặng
+    if (st.giftGoal) {
+      const cur = Number(st.giftGoal.current || 0);
+      const tgt = Number(st.giftGoal.target || 100);
+      const pct = Math.min(100, Math.round((cur / tgt) * 100));
+      const fillEl = document.getElementById('giftGoalFill');
+      const countEl = document.getElementById('giftGoalCount');
+      if (fillEl) fillEl.style.width = `${pct}%`;
+      if (countEl) countEl.textContent = `${cur} / ${tgt} Xu (${pct}%)`;
+    }
 
     const lb = Array.isArray(st.leaderboard) ? st.leaderboard : [];
     renderVipCushions(lb);
@@ -404,8 +419,8 @@
     } else {
       liveDot.classList.remove('connected');
       liveText.textContent = st.settings?.autoSim
-        ? 'CHÙA LINH ỨNG • TỰ ĐỘNG GIẢ LẬP ĐÔNG NGƯỜI'
-        : 'CHÙA LINH ỨNG • ĐỨC PHẬT A DI ĐÀ';
+        ? 'ĐỨC PHẬT A DI ĐÀ • TỰ ĐỘNG GIẢ LẬP'
+        : 'ĐỨC PHẬT A DI ĐÀ';
     }
 
     const btnAutoSim = document.getElementById('btnToggleAutoSim');
@@ -446,6 +461,8 @@
 
   function formatEventSummary(ev) {
     switch (ev.type) {
+      case 'viewerComment':
+        return `💬 <strong>${escapeHtml(ev.user)}</strong>: "${escapeHtml(ev.wish)}" (+${ev.merit} CĐ)`;
       case 'burnIncense':
         return `🔥 <strong>${escapeHtml(ev.user)}</strong> dâng ${ev.count} nén nhang (+${ev.merit} CĐ)`;
       case 'strikeWoodenFish':
@@ -468,14 +485,32 @@
   let fortuneTimer = null;
   let grandTimer = null;
 
+  const processedEventIds = new Set();
   function triggerRitualVisuals(ev) {
     if (!ev) return;
+    if (ev.id) {
+      if (processedEventIds.has(ev.id)) {
+        return; // Đã xử lý sự kiện này, tránh đọc trùng
+      }
+      processedEventIds.add(ev.id);
+      if (processedEventIds.size > 200) {
+        const first = processedEventIds.values().next().value;
+        processedEventIds.delete(first);
+      }
+    }
 
     if (ev.ttsText && ev.type !== 'drawFortune') {
-      audio.enqueueTts(ev.ttsText, { voice: ev.ttsVoice || 'maichi' });
+      audio.enqueueTts(ev.ttsText, { voice: ev.ttsVoice || 'google' });
     }
 
     switch (ev.type) {
+      case 'viewerComment': {
+        audio.playIncenseChime();
+        particles.spawnFloatingMerit(`+${ev.merit} Công Đức`, 540, 860, '#ffe082');
+        animateWalkerOnCarpet(ev.user, ev.avatar, `💬 Bình luận (+${ev.merit} CĐ)`, ev.wish);
+        break;
+      }
+
       case 'burnIncense': {
         audio.playIncenseChime();
         particles.spawnIncenseBurst(540, 895);
@@ -538,7 +573,7 @@
         );
         // Chỉ hiển thị tờ Quẻ Xăm đúng thời điểm giọng đọc bắt đầu vang lên!
         audio.enqueueTts(ev.ttsText || '', {
-          voice: ev.ttsVoice || 'maichi',
+          voice: ev.ttsVoice || 'google',
           onStart: () => {
             audio.playIncenseChime();
             showFortuneModal(ev.user, ev.fortune);
@@ -629,7 +664,7 @@
         } else if (msg.method === 'tts.play') {
           if (msg.params?.url) {
             audio.enqueueTts(msg.params.text || 'Nam mô A Di Đà Phật', {
-              voice: msg.params.voice || 'maichi',
+              voice: msg.params.voice || 'google',
               url: msg.params.url
             });
           }
@@ -717,6 +752,11 @@
   });
 
   // Các nút trên Quick RPC Dock bên phải
+  document.getElementById('btnRpcComment')?.addEventListener('click', () => {
+    const { user, wish } = getFormInput();
+    callRpc('temple.comment', { user, comment: wish || 'Nam Mô A Di Đà Phật' });
+  });
+
   document.getElementById('btnRpcIncense')?.addEventListener('click', () => {
     const { user, wish } = getFormInput();
     callRpc('temple.burnIncense', { user, count: 3, wish });

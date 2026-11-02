@@ -442,19 +442,52 @@ body.obs-mode .stage-wrapper {
 }
 
 .worshipper-wish-bubble {
-  max-width: 340px;
-  padding: 6px 14px;
-  margin-bottom: 4px;
-  border-radius: 14px;
-  background: rgba(18, 4, 3, 0.92);
-  border: 1.5px solid var(--gold-main);
-  color: var(--gold-bright);
-  font-size: 14.5px;
+  position: relative;
+  max-width: 440px;
+  min-width: 140px;
+  padding: 8px 18px;
+  margin-bottom: 10px;
+  border-radius: 16px;
+  background: rgba(16, 5, 4, 0.95);
+  border: 2px solid var(--gold-main);
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.8);
+  color: #fff9c4;
+  font-size: 16px;
   font-weight: 600;
   text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+  z-index: 5;
+  animation: bubblePopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.worshipper-wish-bubble.pop-anim {
+  animation: bubblePopIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.worshipper-wish-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-top: 9px solid var(--gold-main);
+}
+
+@keyframes bubblePopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /* Thẻ tên thí chủ chuẩn phong cách Game Live */
@@ -1119,4 +1152,121 @@ body.obs-mode .stage-wrapper {
   background: rgba(255, 255, 255, 0.04);
   border-left: 3px solid var(--gold-main);
   color: #f3e5cf;
+}
+
+
+/* ==========================================================================
+   THANH MỤC TIÊU QUÀ TẶNG (GIFT GOAL BAR)
+   ========================================================================== */
+.gift-goal-container {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 600px;
+  background: rgba(18, 5, 4, 0.92);
+  border: 1.8px solid var(--gold-main);
+  border-radius: 14px;
+  padding: 8px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 0 15px rgba(255, 215, 0, 0.25);
+  z-index: 10;
+  backdrop-filter: blur(6px);
+}
+
+.gift-goal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--gold-bright);
+}
+
+.gift-goal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+
+.gift-goal-count {
+  color: #fff8e1;
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(255, 215, 0, 0.15);
+  padding: 2px 8px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 215, 0, 0.4);
+}
+
+.gift-goal-bar-bg {
+  position: relative;
+  width: 100%;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.gift-goal-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff8f00, #ffd54f, #fff59d);
+  box-shadow: 0 0 12px #ffc107;
+  border-radius: 8px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ==========================================================================
+   BẢNG HƯỚNG DẪN TƯƠNG TÁC (PINNED CTA GUIDE PLAQUE)
+   ========================================================================== */
+.temple-guide-plaque {
+  position: absolute;
+  top: 145px;
+  left: 20px;
+  width: 250px;
+  background: rgba(14, 4, 3, 0.90);
+  border: 1.5px solid var(--gold-main);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.2);
+  z-index: 10;
+  backdrop-filter: blur(5px);
+}
+
+.plaque-header {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--gold-bright);
+  text-align: center;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.25);
+  letter-spacing: 0.5px;
+}
+
+.plaque-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #f5f5f5;
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+.plaque-item:last-child {
+  margin-bottom: 0;
+}
+
+.plaque-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.plaque-item strong {
+  color: var(--gold-bright);
 }

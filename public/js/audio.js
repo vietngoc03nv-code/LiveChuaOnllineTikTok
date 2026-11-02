@@ -12,7 +12,7 @@ class TempleAudioEngine {
     this.sfxEnabled = true;
     this.bgMusicEnabled = true;
     this.ttsEnabled = true;
-    this.ttsVoice = 'maichi';
+    this.ttsVoice = 'google';
 
     // Nhạc nền "Nam Mô A Di Đà Phật.m4a" — mặc định 65%, cho phép chỉnh trực tiếp 0% - 100%
     const savedMusicVol = parseFloat(localStorage.getItem('temple_music_vol'));
@@ -309,6 +309,17 @@ class TempleAudioEngine {
       return;
     }
 
+    // Chống lặp giọng: Bỏ qua nếu cùng 1 nội dung được yêu cầu đọc liên tiếp trong 4 giây
+    const now = Date.now();
+    if (this.lastEnqueuedText === clean && (now - (this.lastEnqueuedTime || 0)) < 4000) {
+      console.warn('[AudioEngine] Bỏ qua câu TTS bị trùng lặp:', clean);
+      if (onStart) onStart();
+      if (onEnd) onEnd();
+      return;
+    }
+    this.lastEnqueuedText = clean;
+    this.lastEnqueuedTime = now;
+
     if (this.ttsQueue.length >= 6) {
       const dropped = this.ttsQueue.shift();
       if (dropped?.onStart) dropped.onStart();
@@ -318,7 +329,7 @@ class TempleAudioEngine {
     const item = {
       id: `tts_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       text: clean,
-      voice: (options.voice || this.ttsVoice || 'maichi').toLowerCase(),
+      voice: (options.voice || this.ttsVoice || 'google').toLowerCase(),
       url: options.url || null,
       onStart,
       onEnd,
@@ -333,7 +344,7 @@ class TempleAudioEngine {
     this.processTtsQueue();
   }
 
-  async fetchZeroTtsAudio(text, voice = 'maichi') {
+  async fetchZeroTtsAudio(text, voice = 'google') {
     try {
       const res = await fetch('/api/tts', {
         method: 'POST',
